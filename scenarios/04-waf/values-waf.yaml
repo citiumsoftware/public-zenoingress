@@ -1,0 +1,42 @@
+# Standard-mode ZenoIngress, plus an init container that fetches the Coraza
+# proxy-wasm module into a shared volume the proxy mounts read-only at /waf.
+# The WafPolicy in k8s/manifests.yaml points modulePath at /waf/coraza.wasm.
+#
+# This uses the chart's generic proxy.initContainers / extraVolumes /
+# extraVolumeMounts hooks — nothing WAF-specific in the chart.
+controller:
+  replicaCount: 1
+
+proxy:
+  replicaCount: 1
+  service:
+    type: ClusterIP        # kind has no LoadBalancer; verify.sh port-forwards
+
+  # Pull the Coraza WAF module into an emptyDir before the proxy starts.
+  # alpine's busybox has both `wget` (https via ssl_client) and `unzip`, and it
+  # runs fine as the chart's non-root uid — no package install, no root.
+  initContainers:
+    - name: fetch-coraza-waf
+      image: alpine:3.21
+      command: ["sh", "-c"]
+      args:
+        - |
+          set -eu
+          cd /tmp
+          echo "fetching coraza-proxy-wasm 0.6.0 ..."
+          wget -qO coraza.zip https://github.com/corazawaf/coraza-proxy-wasm/releases/download/0.6.0/coraza-proxy-wasm-0.6.0.zip
+          unzip -o coraza.zip >/dev/null
+          cp "$(find . -name '*.wasm' | head -1)" /waf/coraza.wasm
+          echo "installed:" && ls -l /waf/coraza.wasm
+      volumeMounts:
+        - name: waf-module
+          mountPath: /waf
+
+  extraVolumes:
+    - name: waf-module
+      emptyDir: {}
+
+  extraVolumeMounts:
+    - name: waf-module
+      mountPath: /waf
+      readOnly: true

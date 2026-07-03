@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="WAF: clean input reaches the app (200); attacks are blocked in the proxy (403)">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c2140"/><stop offset="1" stop-color="#071426"/></linearGradient>
+    <radialGradient id="halo" cx="50%" cy="-10%" r="95%"><stop offset="0" stop-color="#164a77" stop-opacity="0.55"/><stop offset="1" stop-color="#164a77" stop-opacity="0"/></radialGradient>
+    <linearGradient id="node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12325a"/><stop offset="1" stop-color="#0e2647"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#124a4a"/><stop offset="1" stop-color="#0d3138"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-40%" width="160%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#02060c" flood-opacity="0.55"/></filter>
+    <filter id="tealGlow" x="-70%" y="-90%" width="240%" height="280%"><feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#2dd4bf" flood-opacity="0.55"/></filter>
+    <marker id="aGreen" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#34d399"/></marker>
+  </defs>
+
+  <rect width="900" height="420" fill="url(#bg)"/>
+  <rect width="900" height="420" fill="url(#halo)"/>
+
+  <g font-family="system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#e8eef7">
+    <circle cx="52" cy="52" r="6" fill="#2dd4bf"/>
+    <text x="70" y="50" font-size="23" font-weight="700">Web Application Firewall</text>
+    <text x="70" y="74" font-size="14" fill="#9fb2cc">An in-proxy Coraza WAF blocks SQLi / XSS / path-traversal before traffic reaches the app.</text>
+
+    <!-- component label above the proxy -->
+    <text x="436" y="150" text-anchor="middle" font-size="14" font-weight="700" fill="#e8eef7">ZenoIngress proxy</text>
+    <text x="436" y="169" text-anchor="middle" font-size="11.5" fill="#7fe6d8">Coraza WAF · OWASP rules</text>
+
+    <!-- Client -->
+    <g transform="translate(48,190)">
+      <rect width="132" height="72" rx="15" fill="url(#node)" stroke="#26456b" filter="url(#shadow)"/>
+      <rect x="22" y="18" width="88" height="30" rx="5" fill="none" stroke="#9fb2cc" stroke-width="1.6"/>
+      <circle cx="32" cy="25" r="2" fill="#9fb2cc"/><circle cx="40" cy="25" r="2" fill="#9fb2cc"/>
+      <text x="66" y="62" text-anchor="middle" font-size="14.5" font-weight="600">Client</text>
+    </g>
+
+    <!-- Proxy = the WAF shield -->
+    <g transform="translate(336,178)">
+      <rect width="200" height="96" rx="16" fill="url(#accent)" stroke="#2dd4bf" stroke-opacity="0.6" filter="url(#tealGlow)"/>
+      <path d="M100,16 L124,25 L124,52 Q124,78 100,90 Q76,78 76,52 L76,25 Z" fill="#0d3138" stroke="#2dd4bf" stroke-width="2.2"/>
+      <path d="M90,52 l7,8 l15,-17" fill="none" stroke="#34d399" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Caddy -->
+    <g transform="translate(724,190)">
+      <rect width="132" height="72" rx="15" fill="url(#node)" stroke="#26456b" filter="url(#shadow)"/>
+      <rect x="42" y="14" width="48" height="34" rx="5" fill="none" stroke="#9fb2cc" stroke-width="1.5"/>
+      <line x1="42" y1="23" x2="90" y2="23" stroke="#9fb2cc" stroke-width="1.5"/>
+      <text x="66" y="62" text-anchor="middle" font-size="14.5" font-weight="600">Caddy app</text>
+    </g>
+
+    <!-- clean flow (green, passes) -->
+    <g stroke="#34d399" stroke-width="2.6" marker-end="url(#aGreen)">
+      <line x1="182" y1="212" x2="334" y2="212"/>
+      <line x1="538" y1="212" x2="722" y2="212"/>
+    </g>
+    <text x="210" y="203" font-size="12" fill="#34d399" font-weight="600">clean input</text>
+    <text x="630" y="203" text-anchor="middle" font-size="12.5" fill="#34d399" font-weight="700">200 ✓</text>
+
+    <!-- attack (red, blocked at the shield) -->
+    <line x1="150" y1="360" x2="404" y2="252" stroke="#f87171" stroke-width="2.6" stroke-dasharray="7 5"/>
+    <circle cx="410" cy="248" r="12" fill="#2a0f13" stroke="#f87171" stroke-width="2"/>
+    <g stroke="#f87171" stroke-width="2.6" stroke-linecap="round"><line x1="405" y1="243" x2="415" y2="253"/><line x1="415" y1="243" x2="405" y2="253"/></g>
+    <text x="60" y="380" font-size="12.5" fill="#f87171" font-weight="600">' OR 1=1--    &lt;script&gt;    /../etc/passwd</text>
+    <text x="300" y="300" font-size="12.5" fill="#f87171" font-weight="700">403 blocked</text>
+  </g>
+</svg>

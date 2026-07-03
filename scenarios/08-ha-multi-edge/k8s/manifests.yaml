@@ -1,0 +1,96 @@
+# Hybrid edge / reverse-tunnel demo — the cluster (sovereign) side.
+#
+# TLS is terminated at the EDGE, so the cluster-side Gateway listener is plain
+# HTTP: the edge decrypts the client's request and relays it over the tunnel,
+# and the proxy serves it as an ordinary HTTP connection.
+#
+# The Gateway lives in zenoingress-system (where the tunnel proxy runs); the app
+# and its HTTPRoute live in tunnel-demo and attach across namespaces (the
+# Gateway allows routes from all namespaces).
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: edge-gateway
+  namespace: zenoingress-system
+spec:
+  gatewayClassName: zenoingress
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tunnel-demo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-html
+  namespace: tunnel-demo
+data:
+  index.html: |
+    <!doctype html><meta charset="utf-8"><title>ZenoIngress edge tunnel</title>
+    <body style="font-family:system-ui;background:#0b1f3a;color:#e8eef7;display:grid;place-items:center;height:100vh;margin:0">
+      <main style="text-align:center">
+        <h1>Reached via the <span style="color:#2dd4bf">ZenoIngress edge</span></h1>
+        <p>client &rarr; edge (public) &rarr; reverse tunnel &rarr; proxy (sovereign, no inbound) &rarr; this app</p>
+      </main>
+    </body>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: tunnel-demo
+  labels: { app: demo-app }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: demo-app }
+  template:
+    metadata:
+      labels: { app: demo-app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: html, mountPath: /usr/share/caddy }]
+      volumes:
+        - name: html
+          configMap: { name: demo-html }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: tunnel-demo
+spec:
+  selector: { app: demo-app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: demo-app
+  namespace: tunnel-demo
+spec:
+  parentRefs:
+    - name: edge-gateway
+      namespace: zenoingress-system
+  hostnames:
+    - app.demo.zenoingress.test
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: demo-app
+          port: 80

@@ -1,0 +1,27 @@
+# Chart overrides for the hybrid edge / reverse-tunnel scenario.
+#
+# In tunnel mode the proxy dials OUT to the edge and opens no inbound listener,
+# so the sovereign cluster needs no LoadBalancer and no public IP. The chart
+# renders one proxy Deployment per edge in proxy.tunnel.edges; up.sh passes the
+# edge container's IP:port via --set (it's only known at run time).
+
+controller:
+  replicaCount: 1
+
+proxy:
+  service:
+    type: ClusterIP        # sovereign cluster: NO inbound ports for data traffic
+  tunnel:
+    enabled: true
+    # edges: injected by up.sh  (--set proxy.tunnel.edges[0].address=<edge-ip>:7844)
+    hostnames:
+      - app.demo.zenoingress.test
+    tls:
+      enabled: true        # the edge serves a TLS control plane
+      verify: false        # ...with a self-signed cert in this local demo
+      # If the tunnel TLS handshake won't complete, run the edge with
+      # --no-control-tls and set tls.enabled: false here (plaintext control).
+
+gatewayClass:
+  create: true
+  name: zenoingress

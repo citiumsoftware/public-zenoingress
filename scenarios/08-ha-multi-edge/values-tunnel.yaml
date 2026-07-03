@@ -1,0 +1,26 @@
+# Chart overrides for the HA / multi-edge scenario.
+#
+# proxy.tunnel.edges lists MORE THAN ONE edge; the chart renders one proxy
+# Deployment per edge, each dialing its own edge and registering the same
+# hostname there. Because hostname-conflict is enforced per-edge, the same
+# hostname on two different edges is allowed — that's the HA / DR pattern.
+# up.sh injects the two edge container IPs via --set.
+
+controller:
+  replicaCount: 1
+
+proxy:
+  service:
+    type: ClusterIP        # sovereign cluster: NO inbound ports
+  tunnel:
+    enabled: true
+    # edges: injected by up.sh (edges[0]=edge-a, edges[1]=edge-b)
+    hostnames:
+      - app.demo.zenoingress.test
+    tls:
+      enabled: true
+      verify: false        # self-signed edge cert in this local demo
+
+gatewayClass:
+  create: true
+  name: zenoingress

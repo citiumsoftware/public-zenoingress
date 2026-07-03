@@ -1,0 +1,143 @@
+# Canary release demo: one HTTPRoute splits traffic 90/10 across two versions
+# of the same app using weighted backendRefs (native Gateway API — no license,
+# no special config). Bump v2's weight to shift more traffic to the canary.
+#
+#   HTTPRoute (canary.zenoingress.test)
+#     ├── 90 → Service welcome-v1  (stable)
+#     └── 10 → Service welcome-v2  (canary)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: canary
+---
+# --- stable (v1) -----------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: welcome-v1
+  namespace: canary
+data:
+  index.html: |
+    <!-- ZI_VERSION=v1 -->
+    <!doctype html><meta charset="utf-8"><title>ZenoIngress canary</title>
+    <body style="font-family:system-ui;background:#0b1f3a;color:#e8eef7;display:grid;place-items:center;height:100vh;margin:0">
+      <h1>ZenoIngress canary — <span style="color:#2dd4bf">stable (v1)</span> · version: v1</h1>
+    </body>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: welcome-v1
+  namespace: canary
+  labels: { app: welcome, version: v1 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: welcome, version: v1 }
+  template:
+    metadata:
+      labels: { app: welcome, version: v1 }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: html, mountPath: /usr/share/caddy }]
+      volumes:
+        - name: html
+          configMap: { name: welcome-v1 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: welcome-v1
+  namespace: canary
+spec:
+  selector: { app: welcome, version: v1 }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+# --- canary (v2) -----------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: welcome-v2
+  namespace: canary
+data:
+  index.html: |
+    <!-- ZI_VERSION=v2 -->
+    <!doctype html><meta charset="utf-8"><title>ZenoIngress canary</title>
+    <body style="font-family:system-ui;background:#0b1f3a;color:#e8eef7;display:grid;place-items:center;height:100vh;margin:0">
+      <h1>ZenoIngress canary — <span style="color:#f59e0b">canary (v2)</span> · version: v2</h1>
+    </body>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: welcome-v2
+  namespace: canary
+  labels: { app: welcome, version: v2 }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: welcome, version: v2 }
+  template:
+    metadata:
+      labels: { app: welcome, version: v2 }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: html, mountPath: /usr/share/caddy }]
+      volumes:
+        - name: html
+          configMap: { name: welcome-v2 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: welcome-v2
+  namespace: canary
+spec:
+  selector: { app: welcome, version: v2 }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+# --- routing ---------------------------------------------------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: canary-gateway
+  namespace: canary
+spec:
+  gatewayClassName: zenoingress
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: canary
+  namespace: canary
+spec:
+  parentRefs:
+    - name: canary-gateway
+  hostnames:
+    - canary.zenoingress.test
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: welcome-v1
+          port: 80
+          weight: 90
+        - name: welcome-v2
+          port: 80
+          weight: 10

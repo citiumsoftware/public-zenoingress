@@ -1,0 +1,174 @@
+# Advanced WAF demo: the full OWASP Core Rule Set (CRS 4.x) running in-proxy via
+# coraza-proxy-wasm. Same shape as the waf-app (built-in-operators) showcase, but
+# the WafPolicy loads the whole CRS instead of a few hand-written rules.
+#
+#   curl / browser -> ZenoIngress proxy [Coraza + OWASP CRS] -> Caddy (form page)
+#
+# The HTTPRoute has no hostname, so `kubectl port-forward` + localhost works.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: waf-crs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: waf-page
+  namespace: waf-crs
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>ZenoIngress WAF — OWASP CRS</title>
+        <style>
+          body { margin:0; min-height:100vh; display:grid; place-items:center;
+                 font-family:system-ui,sans-serif; background:#0b1f3a; color:#e8eef7; }
+          main { width:min(90vw,560px); text-align:center; }
+          h1 { color:#2dd4bf; margin-bottom:.25rem; }
+          p { color:#9fb2cc; }
+          form { display:flex; gap:.5rem; margin:1.25rem 0 .75rem; }
+          input { flex:1; padding:.6rem .8rem; border-radius:.5rem; border:1px solid #24405f;
+                  background:#0f2848; color:#e8eef7; }
+          button { padding:.6rem .9rem; border-radius:.5rem; border:0; cursor:pointer;
+                   background:#2dd4bf; color:#04121f; font-weight:600; }
+          .samples { font-size:.85rem; color:#9fb2cc; }
+          .samples button { background:#1b3a5c; color:#e8eef7; font-weight:500; margin:.15rem; }
+          #out { min-height:1.6rem; margin-top:1rem; font-size:1.1rem; }
+          .ok { color:#34d399; } .bad { color:#f87171; }
+        </style>
+      </head>
+      <body>
+        <main>
+          <h1>ZenoIngress WAF · OWASP CRS</h1>
+          <p>Backed by the full OWASP Core Rule Set. Clean traffic flows; the CRS
+             blocks a broad range of attacks in the proxy.</p>
+          <form id="f">
+            <input id="q" autocomplete="off" placeholder="type something, or click a sample below" />
+            <button>Send</button>
+          </form>
+          <div class="samples">
+            samples:
+            <button data-p="hello world">clean</button>
+            <button data-p="' OR 1=1--">SQL injection</button>
+            <button data-p="&lt;script&gt;alert(1)&lt;/script&gt;">XSS</button>
+            <button data-p="/etc/passwd">LFI</button>
+            <button data-p=";cat /etc/passwd">command injection</button>
+          </div>
+          <div id="out"></div>
+        </main>
+        <script>
+          const out = document.getElementById('out');
+          const q = document.getElementById('q');
+          async function probe(v) {
+            q.value = v; out.textContent = '…';
+            let res;
+            try { res = await fetch('/?q=' + encodeURIComponent(v), { cache: 'no-store' }); }
+            catch (e) { out.textContent = 'network error'; return; }
+            if (res.status === 200) out.innerHTML = '<span class="ok">&#10003; allowed (200)</span>';
+            else if (res.status === 403) out.innerHTML = '<span class="bad">&#10007; blocked by CRS (403)</span>';
+            else out.textContent = 'HTTP ' + res.status;
+          }
+          document.getElementById('f').onsubmit = (e) => { e.preventDefault(); probe(q.value); };
+          document.querySelectorAll('.samples button').forEach(
+            (b) => (b.onclick = () => probe(b.dataset.p)));
+        </script>
+      </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waf-app
+  namespace: waf-crs
+  labels: { app: waf-app }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: waf-app }
+  template:
+    metadata:
+      labels: { app: waf-app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: html, mountPath: /usr/share/caddy }]
+      volumes:
+        - name: html
+          configMap: { name: waf-page }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: waf-app
+  namespace: waf-crs
+spec:
+  selector: { app: waf-app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: waf-gateway
+  namespace: waf-crs
+spec:
+  gatewayClassName: zenoingress
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: waf-app
+  namespace: waf-crs
+spec:
+  parentRefs:
+    - name: waf-gateway
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: zenoingress.io
+            kind: WafPolicy
+            name: owasp-crs
+      backendRefs:
+        - name: waf-app
+          port: 80
+---
+apiVersion: zenoingress.io/v1alpha1
+kind: WafPolicy
+metadata:
+  name: owasp-crs
+  namespace: waf-crs
+spec:
+  modulePath: /waf/coraza.wasm
+  # The full OWASP Core Rule Set. coraza-proxy-wasm bundles CRS and exposes it
+  # via embedded aliases: @recommended-conf (coraza base config), @crs-setup-conf
+  # (CRS tunables), and @owasp_crs/*.conf (the rule files — note the GLOB;
+  # @owasp_crs alone is a directory and fails to load). `SecRuleEngine On` last
+  # forces block mode (the recommended conf ships DetectionOnly).
+  #
+  # Tuning: raise the paranoia level or set exclusions by adding SecAction /
+  # SecRuleRemoveById lines after the includes; flip detectionOnly: true below to
+  # log without blocking during rollout.
+  rules:
+    - "Include @recommended-conf"
+    - "Include @crs-setup-conf"
+    - "Include @owasp_crs/*.conf"
+    - "SecRuleEngine On"
+  # CRS inspects query-string args (GET) directly. Enable inspectRequestBody to
+  # also buffer + scan POST bodies (adds latency).
+  inspectRequestBody: false
+  detectionOnly: false
+  # CRS compiles ~900 rules; give each pooled instance headroom.
+  poolSize: 2

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" width="900" height="440" role="img" aria-label="WAF with the full OWASP Core Rule Set blocking many attack classes; clean input reaches the app">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c2140"/><stop offset="1" stop-color="#071426"/></linearGradient>
+    <radialGradient id="halo" cx="50%" cy="-10%" r="95%"><stop offset="0" stop-color="#164a77" stop-opacity="0.55"/><stop offset="1" stop-color="#164a77" stop-opacity="0"/></radialGradient>
+    <linearGradient id="node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12325a"/><stop offset="1" stop-color="#0e2647"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#124a4a"/><stop offset="1" stop-color="#0d3138"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-40%" width="160%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#02060c" flood-opacity="0.55"/></filter>
+    <filter id="tealGlow" x="-70%" y="-90%" width="240%" height="280%"><feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#2dd4bf" flood-opacity="0.6"/></filter>
+    <marker id="aGreen" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#34d399"/></marker>
+  </defs>
+
+  <rect width="900" height="440" fill="url(#bg)"/>
+  <rect width="900" height="440" fill="url(#halo)"/>
+
+  <g font-family="system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" fill="#e8eef7">
+    <circle cx="52" cy="52" r="6" fill="#2dd4bf"/>
+    <text x="70" y="50" font-size="23" font-weight="700">WAF — OWASP Core Rule Set</text>
+    <text x="70" y="74" font-size="14" fill="#9fb2cc">The full OWASP CRS 4.x (~900 rules) runs in-proxy: broad Top-10 coverage, blocked before the backend.</text>
+
+    <!-- component label above the shield -->
+    <text x="451" y="150" text-anchor="middle" font-size="14" font-weight="700" fill="#e8eef7">ZenoIngress proxy · OWASP CRS 4.x</text>
+
+    <!-- Client -->
+    <g transform="translate(44,196)">
+      <rect width="126" height="70" rx="15" fill="url(#node)" stroke="#26456b" filter="url(#shadow)"/>
+      <rect x="20" y="17" width="86" height="30" rx="5" fill="none" stroke="#9fb2cc" stroke-width="1.6"/>
+      <circle cx="30" cy="24" r="2" fill="#9fb2cc"/><circle cx="38" cy="24" r="2" fill="#9fb2cc"/>
+      <text x="63" y="60" text-anchor="middle" font-size="14" font-weight="600">Client</text>
+    </g>
+
+    <!-- Big shield proxy -->
+    <g transform="translate(356,164)">
+      <rect width="190" height="128" rx="16" fill="url(#accent)" stroke="#2dd4bf" stroke-opacity="0.6" filter="url(#tealGlow)"/>
+      <path d="M95,20 L126,31 L126,66 Q126,98 95,114 Q64,98 64,66 L64,31 Z" fill="#0d3138" stroke="#2dd4bf" stroke-width="2.2"/>
+      <path d="M83,64 l8,9 l17,-20" fill="none" stroke="#34d399" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Caddy -->
+    <g transform="translate(730,196)">
+      <rect width="126" height="70" rx="15" fill="url(#node)" stroke="#26456b" filter="url(#shadow)"/>
+      <rect x="40" y="14" width="46" height="32" rx="5" fill="none" stroke="#9fb2cc" stroke-width="1.5"/>
+      <line x1="40" y1="22" x2="86" y2="22" stroke="#9fb2cc" stroke-width="1.5"/>
+      <text x="63" y="60" text-anchor="middle" font-size="14" font-weight="600">Caddy app</text>
+    </g>
+
+    <!-- clean flow -->
+    <g stroke="#34d399" stroke-width="2.6" marker-end="url(#aGreen)">
+      <line x1="172" y1="214" x2="354" y2="214"/>
+      <line x1="548" y1="214" x2="728" y2="214"/>
+    </g>
+    <text x="638" y="205" text-anchor="middle" font-size="12.5" fill="#34d399" font-weight="700">clean → 200 ✓</text>
+
+    <!-- attack classes bouncing off (below the shield) -->
+    <g stroke="#f87171" stroke-width="2.2" stroke-dasharray="6 5">
+      <line x1="205" y1="378" x2="392" y2="300"/>
+      <line x1="330" y1="398" x2="432" y2="300"/>
+      <line x1="470" y1="402" x2="470" y2="300"/>
+      <line x1="620" y1="392" x2="510" y2="300"/>
+    </g>
+    <g stroke="#f87171" stroke-width="2.6" stroke-linecap="round">
+      <line x1="386" y1="292" x2="398" y2="304"/><line x1="398" y1="292" x2="386" y2="304"/>
+      <line x1="426" y1="292" x2="438" y2="304"/><line x1="438" y1="292" x2="426" y2="304"/>
+      <line x1="464" y1="292" x2="476" y2="304"/><line x1="476" y1="292" x2="464" y2="304"/>
+      <line x1="504" y1="292" x2="516" y2="304"/><line x1="516" y1="292" x2="504" y2="304"/>
+    </g>
+    <g font-size="12" fill="#f87171" font-weight="600" text-anchor="middle">
+      <text x="180" y="392">SQL injection</text>
+      <text x="300" y="414">XSS</text>
+      <text x="470" y="420">LFI / RCE</text>
+      <text x="640" y="406">protocol abuse</text>
+    </g>
+    <text x="760" y="330" text-anchor="middle" font-size="12.5" fill="#f0a0a0" font-weight="700">403</text>
+  </g>
+</svg>

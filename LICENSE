@@ -1,0 +1,66 @@
+zenoingress Proprietary License
+
+Copyright (c) 2026 Citium Software. All rights reserved.
+
+zenoingress and its components — including the "zenoingress-controller",
+"zenoingress-proxy", and "zenoingress-edge" container images, the
+"zenoingress-chart" Helm chart, and any accompanying software (collectively, the
+"Software") — are the proprietary and confidential property of Citium Software
+("Citium").
+
+1. Ownership. The Software is licensed, not sold. Citium retains all right,
+   title, and interest in and to the Software, including all intellectual
+   property rights. No rights are granted except as expressly stated below or in
+   a separate written agreement with Citium.
+
+2. Not open source or source-available. Public availability of the Software or
+   its container images (for example, on a public container registry) does not
+   place the Software under any open-source or source-available license and does
+   not grant any right to use, copy, modify, distribute, or create derivative
+   works of the Software. Pulling or downloading an image does not grant a
+   license to use it.
+
+3. Limited free-use grant (current versions). For the versions of the Software
+   that Citium has currently published, Citium grants you a limited,
+   non-exclusive, non-transferable, revocable, royalty-free license to run the
+   Software in (a) up to one (1) production Kubernetes cluster, and (b) any
+   number of non-production (for example, development, testing, and staging)
+   Kubernetes clusters. For the purposes of this grant, a "production Kubernetes
+   cluster" is a single Kubernetes cluster used to serve live traffic or real
+   end users. Any use beyond this grant — including running the Software in more
+   than one production Kubernetes cluster — requires a valid commercial license
+   or subscription agreement with Citium. Citium may offer future versions of
+   the Software under different terms.
+
+4. Documentation and examples. Citium grants you a limited, non-exclusive,
+   non-transferable, revocable license to view and use the documentation and
+   example configurations in this repository (the "Docs") solely to evaluate the
+   Software and to operate a validly licensed copy of the Software. You may copy
+   and adapt the example configuration files for that purpose. All other rights
+   in the Docs are reserved.
+
+5. Restrictions. Except as expressly permitted by a written agreement with
+   Citium, you may not: (a) use the Software beyond the free-use grant in
+   Section 3 (for example, in more than one production Kubernetes cluster)
+   without a
+   commercial license; (b) copy, distribute, sublicense, rent, lease, or
+   otherwise make the
+   Software available to any third party; (c) offer the Software, in whole or in
+   part, as a hosted or managed service; (d) modify, translate, or create
+   derivative works of the Software; or (e) reverse engineer, decompile, or
+   disassemble the Software, except to the extent this restriction is prohibited
+   by applicable law.
+
+6. Trademarks. "Citium", "zenoingress", and related names and logos are
+   trademarks of Citium. This document grants no trademark rights.
+
+7. No warranty. THE SOFTWARE AND DOCS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF
+   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+8. Limitation of liability. TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT
+   SHALL CITIUM BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN
+   AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+   CONNECTION WITH THE SOFTWARE, THE DOCS, OR THEIR USE OR OTHER DEALINGS.
+
+For commercial licensing, contact Citium Software at support@citiumsoftware.com.

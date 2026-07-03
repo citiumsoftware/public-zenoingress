@@ -1,0 +1,172 @@
+# WAF demo: a tiny JS form page behind ZenoIngress, with an in-proxy Coraza WAF
+# (OWASP CRS) on the route. Clean input flows to the backend (200); attack
+# payloads are blocked in the proxy before they ever reach the app (403).
+#
+#   curl/browser -> ZenoIngress proxy [Coraza WAF] -> Caddy (form page)
+#
+# The HTTPRoute has no hostname, so a plain `kubectl port-forward` + localhost
+# works in a browser — no /etc/hosts editing.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: waf-app
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: waf-page
+  namespace: waf-app
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>ZenoIngress WAF demo</title>
+        <style>
+          body { margin:0; min-height:100vh; display:grid; place-items:center;
+                 font-family:system-ui,sans-serif; background:#0b1f3a; color:#e8eef7; }
+          main { width:min(90vw,540px); text-align:center; }
+          h1 { color:#2dd4bf; margin-bottom:.25rem; }
+          p { color:#9fb2cc; }
+          form { display:flex; gap:.5rem; margin:1.25rem 0 .75rem; }
+          input { flex:1; padding:.6rem .8rem; border-radius:.5rem; border:1px solid #24405f;
+                  background:#0f2848; color:#e8eef7; }
+          button { padding:.6rem .9rem; border-radius:.5rem; border:0; cursor:pointer;
+                   background:#2dd4bf; color:#04121f; font-weight:600; }
+          .samples { font-size:.85rem; color:#9fb2cc; }
+          .samples button { background:#1b3a5c; color:#e8eef7; font-weight:500; margin:.15rem; }
+          #out { min-height:1.6rem; margin-top:1rem; font-size:1.1rem; }
+          .ok { color:#34d399; } .bad { color:#f87171; }
+        </style>
+      </head>
+      <body>
+        <main>
+          <h1>ZenoIngress WAF</h1>
+          <p>Send input through the gateway. Clean traffic flows; attacks bounce
+             off the in-proxy Coraza WAF (OWASP CRS).</p>
+          <form id="f">
+            <input id="q" autocomplete="off" placeholder="type something, or click a sample below" />
+            <button>Send</button>
+          </form>
+          <div class="samples">
+            samples:
+            <button data-p="hello world">clean</button>
+            <button data-p="' OR 1=1--">SQL injection</button>
+            <button data-p="&lt;script&gt;alert(1)&lt;/script&gt;">XSS</button>
+            <button data-p="/../../etc/passwd">path traversal</button>
+          </div>
+          <div id="out"></div>
+        </main>
+        <script>
+          const out = document.getElementById('out');
+          const q = document.getElementById('q');
+          async function probe(v) {
+            q.value = v;
+            out.textContent = '…';
+            let res;
+            try { res = await fetch('/?q=' + encodeURIComponent(v), { cache: 'no-store' }); }
+            catch (e) { out.textContent = 'network error'; return; }
+            if (res.status === 200) out.innerHTML = '<span class="ok">&#10003; allowed (200)</span> — clean traffic flows';
+            else if (res.status === 403) out.innerHTML = '<span class="bad">&#10007; blocked (403)</span> — the WAF caught it';
+            else out.textContent = 'HTTP ' + res.status;
+          }
+          document.getElementById('f').onsubmit = (e) => { e.preventDefault(); probe(q.value); };
+          document.querySelectorAll('.samples button').forEach(
+            (b) => (b.onclick = () => probe(b.dataset.p)));
+        </script>
+      </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waf-app
+  namespace: waf-app
+  labels: { app: waf-app }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: waf-app }
+  template:
+    metadata:
+      labels: { app: waf-app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: html, mountPath: /usr/share/caddy }]
+      volumes:
+        - name: html
+          configMap: { name: waf-page }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: waf-app
+  namespace: waf-app
+spec:
+  selector: { app: waf-app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: waf-gateway
+  namespace: waf-app
+spec:
+  gatewayClassName: zenoingress
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: waf-app
+  namespace: waf-app
+spec:
+  parentRefs:
+    - name: waf-gateway
+  # no hostnames → matches any Host, so localhost:8080 works in a browser
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: zenoingress.io
+            kind: WafPolicy
+            name: coraza-crs
+      backendRefs:
+        - name: waf-app
+          port: 80
+---
+apiVersion: zenoingress.io/v1alpha1
+kind: WafPolicy
+metadata:
+  name: coraza-crs
+  namespace: waf-app
+spec:
+  modulePath: /waf/coraza.wasm
+  # SecLang directives, one per entry. The controller wraps these into the
+  # Coraza plugin config. This is the SIMPLE variant: a few hand-written rules
+  # using coraza's built-in detection operators (@detectSQLi / @detectXSS,
+  # backed by coraza-wasilibs) plus a path-traversal check.
+  #
+  # For the full OWASP Core Rule Set, see the ../waf-crs showcase (it uses
+  # `Include @owasp_crs/*.conf` — the glob; `@owasp_crs` alone is a directory
+  # and fails to load).
+  rules:
+    - "SecRuleEngine On"
+    - 'SecRule ARGS "@detectSQLi" "id:101,phase:1,deny,status:403,msg:''SQL injection'',t:urlDecodeUni"'
+    - 'SecRule ARGS "@detectXSS" "id:102,phase:1,deny,status:403,msg:''XSS'',t:urlDecodeUni"'
+    - 'SecRule ARGS "@contains ../" "id:103,phase:1,deny,status:403,msg:''path traversal''"'
+  # Query-string args (GET) are always inspected; flip this on to also buffer
+  # and inspect POST bodies (adds latency).
+  inspectRequestBody: false

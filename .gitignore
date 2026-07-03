@@ -1,0 +1,8 @@
+# Internal maintainer notes — not for the public repo.
+TODO.md
+
+# Runtime-generated demo TLS material (scenarios 07 / 08 gen-certs.sh).
+**/certs/
+
+# Claude Code local settings.
+.claude/settings.local.json
