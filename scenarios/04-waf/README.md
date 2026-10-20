@@ -29,9 +29,8 @@ zenoingress from the public chart.
 ./down.sh      # delete the kind cluster
 ```
 
-Then browse it: port-forward the proxy to any free local port and open it (e.g.
-`kubectl -n zenoingress-system port-forward svc/<proxy> 18080:80` → open
-<http://localhost:18080>). The route has no hostname, so localhost works with no
+Then browse it: `kubectl -n waf-app port-forward svc/waf-gateway-zenoingress 18080:80`
+and open <http://localhost:18080>. The route has no hostname, so localhost works with no
 `/etc/hosts` edits. Type input or click a sample (clean / SQL injection / XSS /
 path traversal) and watch the allowed/blocked result.
 

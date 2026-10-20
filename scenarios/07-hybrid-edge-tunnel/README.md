@@ -47,7 +47,12 @@ exposes no inbound port.
 
 - **`gen-certs.sh`** mints a throwaway self-signed cert for the edge (git-ignored;
   never commit it).
-- **The edge container** runs `zenoingress-edge` with `--auth-mode=none` and the
+- **The edge container** runs `zenoingress-edge` with token authentication:
+  `gen-certs.sh` writes a random tunnel token and an edge config
+  (`certs/edge-auth.yaml`) that accepts that token for `*.demo.zenoingress.test`
+  only, and `up.sh` gives the same token to the chart
+  (`proxy.tunnel.auth.token`). The edge refuses tunnels without a valid token,
+  and a token cannot register hostnames outside its pattern. It uses the
   self-signed cert, serving a TLS **data plane** on `:8443` (published to your
   host) and a **control plane** on `:7844` (reached by the proxy over the `kind`
   docker network). `up.sh` discovers the container's IP and passes it to the chart.
@@ -64,10 +69,13 @@ exposes no inbound port.
 - **Real edge:** run `zenoingress-edge` on a public node — a hardened VM or a
   container platform — instead of a local container. The cluster side is
   identical; only the edge address changes.
-- **Harden the trust:** this demo uses `--auth-mode=none` and a self-signed cert
-  with `verify: false`. For real deployments, switch the edge to
-  `--auth-mode mtls` with your own CA and set `tls.verify: true` + a pinned CA on
-  the proxy, so the two ends mutually authenticate.
+- **Harden the trust:** this demo authenticates the proxy with a token but does
+  not verify the edge's self-signed certificate (`verify: false`). For real
+  deployments, give the edge a certificate the proxy can verify
+  (`tls.verify: true`, with `tls.caSecret` pinning your CA), keep the token in a
+  Secret (`proxy.tunnel.auth.existingSecret`), or switch to `--auth-mode mtls`
+  with client certificates (`tls.clientCertSecret`). The edge refuses
+  `--auth-mode none` unless started with `--insecure-allow-no-auth`.
 - **HA / multi-region:** run several edges (different regions) and steer clients
   with DNS/Anycast. A multi-edge variant of this scenario could be added later.
 

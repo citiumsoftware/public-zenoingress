@@ -2,8 +2,8 @@
 #
 #   Caddy (static page)  ->  Service  ->  HTTPRoute  ->  Gateway (class: zenoingress)
 #
-# ZenoIngress's controller sees the Gateway + HTTPRoute, programs the shared
-# proxy, and the proxy serves welcome.zenoingress.test from the Caddy pod.
+# ZenoIngress's controller sees the Gateway, starts a proxy for it in this
+# namespace (simple-gateway-zenoingress), and programs the HTTPRoute into it.
 # No custom image: the official caddy image serves whatever is at
 # /usr/share/caddy, so we just mount our index.html there via a ConfigMap.
 ---
