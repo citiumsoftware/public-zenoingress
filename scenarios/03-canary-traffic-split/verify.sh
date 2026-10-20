@@ -4,20 +4,10 @@
 set -uo pipefail
 cd "$(dirname "$0")"
 HOST=canary.zenoingress.test
-NS=zenoingress-system
 N="${1:-40}"
-
-SVC="$(kubectl -n "$NS" get svc -o name | grep -m1 proxy)"
-[ -n "$SVC" ] || { echo "proxy service not found in $NS — run ./up.sh first"; exit 1; }
-
-# Random free local port (avoids clashing with anything on :8080).
-PF_LOG="$(mktemp)"
-kubectl -n "$NS" port-forward "$SVC" :80 >"$PF_LOG" 2>&1 &
-trap 'kill %1 2>/dev/null; rm -f "$PF_LOG"' EXIT
-sleep 3
-PORT="$(sed -nE 's|.*127\.0\.0\.1:([0-9]+).*|\1|p' "$PF_LOG" | head -1)"
-[ -n "$PORT" ] || { echo "port-forward failed:"; cat "$PF_LOG"; exit 1; }
-echo "# port-forward $SVC  (localhost:$PORT -> proxy :80)"
+source ../lib/common.sh
+zi_gateway_forward canary canary-gateway 80 || exit 1
+PORT="$ZI_PORT"
 
 echo "# firing $N requests at http://$HOST/ ..."
 v1=0; v2=0; other=0
@@ -36,3 +26,11 @@ echo "  canary  v2 : $v2 / $N"
 [ "$other" -eq 0 ] || echo "  unrouted   : $other / $N  (proxy not ready?)"
 echo
 echo "(weights are 90/10 in k8s/manifests.yaml; small N will vary. Raise N: ./verify.sh 200)"
+
+# Both versions must take traffic, nothing may be unrouted, and the canary must
+# stay the minority (90/10 leaves plenty of slack even at N=40).
+if [ "$other" -eq 0 ] && [ "$v1" -gt 0 ] && [ "$v2" -gt 0 ] && [ "$v2" -lt "$v1" ]; then
+  echo "PASS — traffic is split between stable and canary."
+else
+  echo "FAIL — expected both versions to answer, mostly v1, none unrouted."; exit 1
+fi

@@ -3,19 +3,9 @@
 # the CRS covers are blocked (403) in the proxy before reaching the app.
 set -uo pipefail
 cd "$(dirname "$0")"
-NS=zenoingress-system
-
-SVC="$(kubectl -n "$NS" get svc -o name | grep -m1 proxy)"
-[ -n "$SVC" ] || { echo "proxy service not found in $NS — run ./up.sh first"; exit 1; }
-
-# Random free local port (avoids clashing with anything on :8080).
-PF_LOG="$(mktemp)"
-kubectl -n "$NS" port-forward "$SVC" :80 >"$PF_LOG" 2>&1 &
-trap 'kill %1 2>/dev/null; rm -f "$PF_LOG"' EXIT
-sleep 3
-PORT="$(sed -nE 's|.*127\.0\.0\.1:([0-9]+).*|\1|p' "$PF_LOG" | head -1)"
-[ -n "$PORT" ] || { echo "port-forward failed:"; cat "$PF_LOG"; exit 1; }
-echo "# port-forward $SVC  (localhost:$PORT -> proxy :80)"
+source ../lib/common.sh
+zi_gateway_forward waf-crs waf-gateway 80 || exit 1
+PORT="$ZI_PORT"
 
 fail=0
 probe() { # <label> <expected-code> <query>

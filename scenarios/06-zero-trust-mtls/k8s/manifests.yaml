@@ -4,7 +4,7 @@
 #
 #   mTLS (client SVID) ─▶ ZenoIngress proxy ─▶ [Cedar AuthzPolicy] ─▶ api
 #         │                     │                      │
-#    GEP-91 frontendValidation  │            x-spiffe-id (from the cert) = principal
+#    GEP-91 spec.tls.frontend   │            x-spiffe-id (from the cert) = principal
 #    (no cert → handshake fail) TLS terminate         permit payments+POST only
 #
 # The server cert / client-CA secrets are created by up.sh from gen-certs.sh.
@@ -64,6 +64,18 @@ metadata:
   namespace: zero-trust
 spec:
   gatewayClassName: zenoingress
+  # GEP-91 (Standard since Gateway API v1.5): require a client certificate
+  # chaining to this CA on every HTTPS listener of the Gateway. The mode
+  # defaults to AllowValidOnly: no certificate, or one from another CA, and the
+  # TLS handshake is refused.
+  tls:
+    frontend:
+      default:
+        validation:
+          caCertificateRefs:
+            - group: ""
+              kind: ConfigMap
+              name: zt-client-ca
   listeners:
     - name: https
       port: 443
@@ -75,14 +87,6 @@ spec:
           - group: ""
             kind: Secret
             name: zt-server-cert
-        # GEP-91: require a client cert chaining to this CA (mode defaults to
-        # AllowValidOnly, so no cert / bad cert → the TLS handshake is rejected).
-        # The experimental CRD requires an explicit (empty = core) group.
-        frontendValidation:
-          caCertificateRefs:
-            - group: ""
-              kind: Secret
-              name: zt-client-ca
       allowedRoutes:
         namespaces:
           from: Same

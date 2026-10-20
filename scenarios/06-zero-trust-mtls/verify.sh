@@ -5,20 +5,15 @@
 #      a different SVID or a different method is denied (403).
 set -uo pipefail
 cd "$(dirname "$0")"
-NS=zenoingress-system
 HOST=zt.demo.zeno
+source ../lib/common.sh
 
 [ -f certs/ca.crt ] || { echo "no certs/ — run ./up.sh (or ./gen-certs.sh) first"; exit 1; }
-SVC="$(kubectl -n "$NS" get svc -o name | grep -m1 proxy)"
-[ -n "$SVC" ] || { echo "proxy service not found in $NS — run ./up.sh first"; exit 1; }
+zi_gateway_forward zero-trust zt-gateway 443 || exit 1
+PORT="$ZI_PORT"
 
-echo "# port-forward $SVC  (localhost:8443 -> proxy :443)"
-kubectl -n "$NS" port-forward "$SVC" 8443:443 >/dev/null 2>&1 &
-trap 'kill %1 2>/dev/null' EXIT
-sleep 2
-
-BASE="--resolve $HOST:8443:127.0.0.1 --cacert certs/ca.crt"
-url="https://$HOST:8443/api/payments"
+BASE="--resolve $HOST:$PORT:127.0.0.1 --cacert certs/ca.crt"
+url="https://$HOST:$PORT/api/payments"
 code() { curl -s -o /dev/null -w '%{http_code}' $BASE "$@" 2>/dev/null; }
 check() { # <label> <expected> <actual>
   if [ "$2" = "$3" ]; then printf '  %-42s %s  (want %s)  PASS\n' "$1" "$3" "$2"
