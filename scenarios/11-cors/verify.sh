@@ -2,7 +2,7 @@
 # Play the browser: send the CORS preflight and the actual request from an
 # allowed origin, a wildcard-matched origin and a foreign origin.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 
 zi_gateway_forward cors gw 80 || exit 1

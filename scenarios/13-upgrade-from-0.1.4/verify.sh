@@ -3,7 +3,7 @@
 # proxy Service in zenoingress-system. After the upgrade it also checks that the
 # release stayed in shared mode and kept its proxy Service (same address).
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 HOST=welcome.zenoingress.test
 STATE="$(dirname "$0")/.proxy-ip"

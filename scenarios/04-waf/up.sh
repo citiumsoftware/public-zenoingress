@@ -7,7 +7,7 @@
 # values-waf.yaml) and a WafPolicy attaches it to the route. Requires: docker,
 # kind, kubectl, helm 3.8+, and internet from the cluster (to fetch the module).
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 CLUSTER=zeno-waf
 

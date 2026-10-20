@@ -10,7 +10,7 @@
 # The release keeps its shared proxy (an upgrade never changes the provisioning
 # model, so the address stays the same).
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 CLUSTER=zeno-upgrade
 zi_load_images "$CLUSTER" controller proxy

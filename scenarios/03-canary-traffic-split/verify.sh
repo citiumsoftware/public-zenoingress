@@ -2,7 +2,7 @@
 # Prove the split: fire N requests at one hostname and count how many landed on
 # stable (v1) vs canary (v2). With weights 90/10 you should see roughly 9:1.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 HOST=canary.zenoingress.test
 N="${1:-40}"
 source ../lib/common.sh

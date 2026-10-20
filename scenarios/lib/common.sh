@@ -83,8 +83,8 @@ zi_port_forward() {
   kubectl -n "$1" port-forward "$2" ":$3" >"$log" 2>&1 &
   ZI_PF_PID=$!
   trap 'kill "$ZI_PF_PID" 2>/dev/null; rm -f "'"$log"'"' EXIT
-  local i
-  for i in $(seq 1 20); do
+
+  for _ in $(seq 1 20); do
     ZI_PORT="$(sed -nE 's|.*127\.0\.0\.1:([0-9]+).*|\1|p' "$log" | head -1)"
     [ -n "$ZI_PORT" ] && break
     sleep 0.5

@@ -6,7 +6,7 @@
 # Standard ingress mode; the only "canary" bit is the weighted backendRefs in
 # k8s/manifests.yaml. Requires: docker, kind, kubectl, helm 3.8+.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 CLUSTER=zeno-canary
 

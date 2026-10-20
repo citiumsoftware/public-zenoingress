@@ -2,7 +2,7 @@
 # Prove traffic flows: client -> the Gateway's proxy -> Caddy static page.
 # Port-forwards the Gateway's proxy Service and curls it with the demo Host.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 HOST=welcome.zenoingress.test
 

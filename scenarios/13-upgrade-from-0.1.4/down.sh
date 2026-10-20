@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tear down the upgrade scenario (deletes the whole kind cluster).
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 rm -f .proxy-ip
 kind delete cluster --name zeno-upgrade

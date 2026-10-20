@@ -4,7 +4,7 @@
 #   2. Cedar — only the payments SVID doing POST /api/payments is permitted;
 #      a different SVID or a different method is denied (403).
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 HOST=zt.demo.zeno
 source ../lib/common.sh
 

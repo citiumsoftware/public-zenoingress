@@ -6,7 +6,7 @@
 #
 # Requires: docker, kind, kubectl, helm 3.8+. See ../lib/common.sh for overrides.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 CLUSTER=zeno-teams
 

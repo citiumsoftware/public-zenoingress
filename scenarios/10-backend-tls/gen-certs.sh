@@ -3,7 +3,7 @@
 # certificate for the backend (SAN DNS:backend.secure.test plus a SPIFFE URI).
 # EC P-256. Do not use for anything real.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 mkdir -p certs && cd certs
 openssl ecparam -genkey -name prime256v1 -out ca.key
 openssl req -x509 -new -key ca.key -sha256 -days 365 -subj "/CN=backend-demo-ca" -out ca.crt

@@ -7,7 +7,7 @@
 #     c.shop.test is not served;
 #   - the Gateway counts the attached ListenerSets.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 
 fail=0

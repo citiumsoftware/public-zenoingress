@@ -2,7 +2,7 @@
 # Prove HA: the app is reachable via BOTH edges, and stopping one edge leaves the
 # other still serving (a single front-door failure does not take the app down).
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 APP=app.demo.zenoingress.test
 
 hit() { curl -sk --resolve "$APP:$1:127.0.0.1" -o /dev/null -w '%{http_code}' "https://$APP:$1/" 2>/dev/null; }

@@ -5,7 +5,7 @@
 #   - two client SPIFFE SVIDs                            (URI SAN spiffe://demo.zeno/<name>)
 # These are demo certs (EC P-256). Do not use them for anything real.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 D=certs
 mkdir -p "$D"; cd "$D"
 

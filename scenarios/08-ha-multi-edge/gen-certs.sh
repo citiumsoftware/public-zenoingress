@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Self-signed TLS cert for the edge (data + control plane). Demo only, throwaway.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 mkdir -p certs
 openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
   -keyout certs/edge.key -out certs/edge.crt \

@@ -7,7 +7,7 @@
 # public OCI chart. Requires: docker, kind, kubectl, helm 3.8+ (OCI support).
 # See ../lib/common.sh for the version and local-image overrides.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 CLUSTER=zeno-simple
 

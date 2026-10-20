@@ -5,7 +5,7 @@
 #   no-ca               : the policy's CA does not exist -> 5xx, policy not accepted
 #   spiffe              : SAN check against a SPIFFE URI instead of the name -> 200
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 NS=backend-tls
 

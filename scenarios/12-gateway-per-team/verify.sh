@@ -5,7 +5,7 @@
 #   - spec.infrastructure labels are on the generated objects;
 #   - deleting a Gateway removes its proxy, and the other team is unaffected.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 
 fail=0

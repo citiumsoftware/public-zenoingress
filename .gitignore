@@ -6,3 +6,6 @@ TODO.md
 
 # Claude Code local settings.
 .claude/settings.local.json
+
+# run-all.sh output
+scenarios/results/

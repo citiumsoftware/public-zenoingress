@@ -2,7 +2,7 @@
 # Prove the OWASP CRS works: clean input passes (200); a range of attack classes
 # the CRS covers are blocked (403) in the proxy before reaching the app.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 zi_gateway_forward waf-crs waf-gateway 80 || exit 1
 PORT="$ZI_PORT"

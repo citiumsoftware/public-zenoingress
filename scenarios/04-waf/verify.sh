@@ -3,7 +3,7 @@
 # in the proxy (403) before they reach the app. The route has no hostname, so
 # we just curl localhost through the port-forward.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 zi_gateway_forward waf-app waf-gateway 80 || exit 1
 PORT="$ZI_PORT"

@@ -13,7 +13,7 @@
 #
 # Requires: docker, kind, kubectl, helm 3.8+, openssl.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 source ../lib/common.sh
 CLUSTER=zeno-ha
 NET=kind
