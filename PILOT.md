@@ -91,7 +91,7 @@ and the list of supported features.
 - Already have Gateway API CRDs from another controller? Tell us which
   version; zenoingress needs v1.6.1 (v1.4+ works without ListenerSet and
   BackendTLSPolicy).
-- Already running 0.1.4? Upgrade instead (B9).
+- Already running 0.1.4? Upgrade instead (B10).
 
 ### B2. Your first Gateway
 
@@ -215,13 +215,42 @@ certificate expiry.
 
 **Tell us:** which metrics or logs you missed while testing.
 
-### B8. Gateway API conformance on your cluster (optional)
+### B8. Load (optional)
+
+If you compare zenoingress with your current ingress under load, run the load
+generator inside the cluster so you measure the ingress, not your network:
+
+```bash
+kubectl run fortio --image=fortio/fortio --restart=Never --rm -i -- \
+  load -c 100 -qps 0 -t 60s -H "Host: hello.example.com" \
+  http://web-zenoingress.default.svc/
+```
+
+`-qps 0` finds the maximum; a fixed rate (`-qps 20000`) shows tail latency at
+a load you expect. Use a fast backend: a slow one measures the backend. For a
+fair comparison:
+
+- **No CPU limit on the proxy** (the chart default) or the same limit on both
+  ingresses: a CPU-limited proxy is throttled in bursts.
+- **`proxy.limits.upstreamKeepalive`** (default 512) above the number of
+  requests in flight to one backend pod.
+- **Log level:** `--set proxy.logLevel=warn` gives a little more
+  throughput than the default `info`.
+
+Our own numbers against nginx, HAProxy, Envoy, ingress-nginx and Envoy
+Gateway are available on request.
+
+**Tell us:** requests per second, p99 latency, errors, and the proxy's
+memory (`kubectl top pod -l gateway.networking.k8s.io/gateway-name=web`)
+next to your current ingress at the same load.
+
+### B9. Gateway API conformance on your cluster (optional)
 
 zenoingress passes the v1.6.1 GATEWAY-HTTP profile (Core 37/37, Extended
 53/53) on kind. If you want to see that on your cluster, we can send the exact
 command; it needs about 30 minutes and a load balancer.
 
-### B9. Upgrade and rollback
+### B10. Upgrade and rollback
 
 From 0.1.4 ([scenario 13](./scenarios/13-upgrade-from-0.1.4/) shows the whole
 path):
@@ -246,7 +275,7 @@ UDP routes stop working (it looks for them at `v1alpha2`), its controller logs
 `404 page not found` warnings, and client-certificate validation is not
 applied. Tell us how the upgrade and, if you try it, the rollback went.
 
-### B10. Clean up
+### B11. Clean up
 
 ```bash
 kubectl delete gateway --all -A          # removes the per-Gateway proxies
