@@ -310,6 +310,9 @@ We would rather you hear these from us:
 - **Client IP over the tunnel:** in tunnel mode the proxy sees the edge as the
   source address. Put client-IP rules at the edge.
 - **Retries:** HTTPRoute retry settings are not implemented yet.
+- **TCP, TLS and UDP routes:** when a backend's pods change, these routes
+  pick up the new pod addresses at the next periodic resync (up to 5
+  minutes); HTTP and gRPC routes follow within seconds.
 - **Static addresses:** `Gateway.spec.addresses` is reported on the Gateway but
   not applied to its proxy Service; request a fixed IP through your load
   balancer's annotations (`proxy.service.annotations`).
