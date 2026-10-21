@@ -23,6 +23,7 @@ Task-focused walkthroughs for running zenoingress.
 | 11 | [CORS](./11-cors/) | The HTTPRoute **CORS** filter for a browser-facing API. |
 | 12 | [A Gateway per team](./12-gateway-per-team/) | Each Gateway its own proxy and address; the same hostname, isolated. |
 | 13 | [Upgrade from 0.1.4](./13-upgrade-from-0.1.4/) | The upgrade path, proving the address and the mode survive. |
+| 14 | [Resilience](./14-resilience/) | Traffic keeps flowing while proxies and controllers are replaced (no failed requests). |
 
 <!-- Add new scenarios as numbered directories and list them here. -->
 
@@ -37,7 +38,8 @@ Task-focused walkthroughs for running zenoingress.
   `./down.sh` before the next one.
 
 Each `verify.sh` prints PASS or FAIL per check and exits non-zero on any failure, so the
-scenarios double as a test suite: `for s in 0[2-9]* 1[0-2]*; do (cd $s && ./up.sh && ./verify.sh; ./down.sh); done`.
+scenarios double as a test suite: `./run-all.sh` runs 02-14 one after another (about 30
+minutes) and writes a summary to `results/`.
 
 ## Versions and overrides
 

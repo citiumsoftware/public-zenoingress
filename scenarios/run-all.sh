@@ -3,7 +3,7 @@
 # torn down afterwards) and write a summary you can send back with your pilot
 # feedback.
 #
-#   ./run-all.sh                 # 02-13
+#   ./run-all.sh                 # 02-14
 #   ./run-all.sh 09 10 13        # just these
 #
 # Logs and the summary go to results/<timestamp>/. Uses the same overrides as

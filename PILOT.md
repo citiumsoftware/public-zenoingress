@@ -12,7 +12,7 @@ surprised you or got in your way.
 ## Contents
 
 - [What you need](#what-you-need)
-- [Track A — the scenarios on your laptop (1–2 hours)](#track-a--the-scenarios-on-your-laptop)
+- [Track A — the scenarios on your laptop (about an hour)](#track-a--the-scenarios-on-your-laptop)
 - [Track B — your own cluster (half a day)](#track-b--your-own-cluster)
 - [Track C — a cluster with no inbound access (optional)](#track-c--a-cluster-with-no-inbound-access-optional)
 - [Known limitations](#known-limitations)
@@ -25,7 +25,7 @@ surprised you or got in your way.
 | Kubernetes | created for you with `kind` (0.24+) | **1.31+** (the Gateway API v1.6 CRDs need it), a test or staging cluster |
 | Tools | `docker`, `kind`, `kubectl`, `helm` 3.14+, `curl`, `openssl` | `kubectl`, `helm` 3.14+, `curl`, `openssl` (3.5+ to see post-quantum TLS) |
 | Access | internet (images, CRDs) | cluster-admin (CRDs, a ClusterRole), a load balancer or NodePort access |
-| Your time | 1–2 hours, mostly waiting | half a day |
+| Your time | about an hour, mostly waiting | half a day |
 
 Nothing reports back to us automatically. You decide what to send.
 
@@ -37,7 +37,7 @@ deletes the cluster again.
 
 ```bash
 cd scenarios
-./run-all.sh            # 02-13, about an hour; or e.g. ./run-all.sh 09 10 12
+./run-all.sh            # 02-14, about 30 minutes; or e.g. ./run-all.sh 09 10 12
 ```
 
 `run-all.sh` writes `scenarios/results/<time>/summary.txt` and a log per
@@ -60,6 +60,7 @@ What each scenario proves:
 | 11 | [CORS](./scenarios/11-cors/) | Only allowed origins get CORS access; preflights answered by the gateway. |
 | 12 | [A Gateway per team](./scenarios/12-gateway-per-team/) | Two Gateways, two addresses, the same hostname, isolated. |
 | 13 | [Upgrade from 0.1.4](./scenarios/13-upgrade-from-0.1.4/) | The address and the shared mode survive the upgrade. |
+| 14 | [Resilience](./scenarios/14-resilience/) | No failed request while a proxy pod, the controller and the leader are replaced. |
 
 **Questions for Track A**
 
@@ -174,7 +175,8 @@ route unprotected. Please try to break that and tell us if you succeed.
 
 ### B6. Resilience
 
-Run steady traffic against a route (e.g. `while true; do curl -s -o /dev/null
+[Scenario 14](./scenarios/14-resilience/) does this on kind (no failed
+request in our runs). On your cluster, run steady traffic against a route (e.g. `while true; do curl -s -o /dev/null
 -w '%{http_code}\n' ...; sleep 0.2; done | uniq -c`) while you:
 
 1. **Delete a proxy pod:** `kubectl delete pod -l gateway.networking.k8s.io/gateway-name=web`.

@@ -179,6 +179,7 @@ chart, `./verify.sh` proves it with PASS/FAIL checks, and `./down.sh` cleans up.
 | 11 | [CORS](./scenarios/11-cors/) | The HTTPRoute CORS filter for a browser-facing API. |
 | 12 | [A Gateway per team](./scenarios/12-gateway-per-team/) | Each Gateway its own proxy and address; same hostname, isolated. |
 | 13 | [Upgrade from 0.1.4](./scenarios/13-upgrade-from-0.1.4/) | The upgrade path, proving the address and mode survive. |
+| 14 | [Resilience](./scenarios/14-resilience/) | Traffic keeps flowing while proxies and controllers are replaced (no failed requests). |
 
 To run the scenarios against a build you have locally (images in your docker daemon, chart on
 disk), see [`scenarios/README.md`](./scenarios/README.md#running-against-a-local-build).
