@@ -57,7 +57,7 @@ demo PKI, and installs zenoingress from the public chart.
 ## Notes / caveats
 
 - Client-certificate validation is Standard since Gateway API v1.5. Releases
-  before ZenoIngress 0.1.5 used the experimental per-listener
+  before ZenoIngress 0.2.0 used the experimental per-listener
   `tls.frontendValidation` field, which the v1.5+ CRDs no longer keep; move it
   to `spec.tls.frontend` as shown here.
 - SVIDs are minted with `openssl` (no SPIRE) so the scenario stays self-contained.

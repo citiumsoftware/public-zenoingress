@@ -22,7 +22,7 @@ Task-focused walkthroughs for running zenoingress.
 | 10 | [TLS to the backend](./10-backend-tls/) | **BackendTLSPolicy**: re-encrypt and verify the backend; fails closed. |
 | 11 | [CORS](./11-cors/) | The HTTPRoute **CORS** filter for a browser-facing API. |
 | 12 | [A Gateway per team](./12-gateway-per-team/) | Each Gateway its own proxy and address; the same hostname, isolated. |
-| 13 | [Upgrade from 0.1.4](./13-upgrade-from-0.1.4/) | The upgrade path, proving the address and the mode survive. |
+| 13 | [Upgrade from 0.1.5](./13-upgrade-from-0.1.5/) | The upgrade path, proving the address and the mode survive. |
 | 14 | [Resilience](./14-resilience/) | Traffic keeps flowing while proxies and controllers are replaced (no failed requests). |
 
 <!-- Add new scenarios as numbered directories and list them here. -->
@@ -48,7 +48,7 @@ environment variables change that:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ZENOINGRESS_VERSION` | `0.1.5` | chart and image version |
+| `ZENOINGRESS_VERSION` | `0.2.0` | chart and image version |
 | `ZENOINGRESS_CHART` | `oci://ghcr.io/citiumsoftware/zenoingress-chart` | the chart: the OCI chart, or a chart directory |
 | `ZENOINGRESS_REGISTRY` | `ghcr.io/citiumsoftware` | where the images come from (used for the edge container and `kind load`) |
 | `ZENOINGRESS_LOAD_IMAGES` | unset | `1`: copy the images from your local docker daemon into kind instead of pulling them |

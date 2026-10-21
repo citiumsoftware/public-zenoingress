@@ -12,7 +12,7 @@
 #                              built or mirrored yourself)
 #   GATEWAY_API_VERSION        Gateway API CRD release        (default v1.6.1)
 
-ZENOINGRESS_VERSION="${ZENOINGRESS_VERSION:-0.1.5}"
+ZENOINGRESS_VERSION="${ZENOINGRESS_VERSION:-0.2.0}"
 ZENOINGRESS_CHART="${ZENOINGRESS_CHART:-oci://ghcr.io/citiumsoftware/zenoingress-chart}"
 ZENOINGRESS_REGISTRY="${ZENOINGRESS_REGISTRY:-ghcr.io/citiumsoftware}"
 GATEWAY_API_VERSION="${GATEWAY_API_VERSION:-v1.6.1}"

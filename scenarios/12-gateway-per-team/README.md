@@ -43,8 +43,8 @@ proxies are sized from the chart's `proxy` values (`replicaCount`,
 
 **Shared mode.** With `provisioning: shared` (Helm), or the annotation
 `zenoingress.io/provisioning: shared` on a GatewayClass, all Gateways of the
-class are served by one proxy on one address, as releases before 0.1.5 did.
-Upgrades keep the mode they had; see [scenario 13](../13-upgrade-from-0.1.4/).
+class are served by one proxy on one address, as releases before 0.2.0 did.
+Upgrades keep the mode they had; see [scenario 13](../13-upgrade-from-0.1.5/).
 On a shared proxy, a hostname claimed by two Gateways goes to the older
 Gateway, and the newer listener reports `Conflicted=True`
 (`HostnameConflict`).

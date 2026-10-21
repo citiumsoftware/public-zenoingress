@@ -1,13 +1,13 @@
-# Scenario 13 — Upgrade from 0.1.4
+# Scenario 13 — Upgrade from 0.1.5
 
-Upgrade an existing 0.1.4 install, the way a running cluster should be
+Upgrade an existing 0.1.5 install, the way a running cluster should be
 upgraded, and prove nothing moved.
 
 ## Run
 
 ```bash
-./up.sh        # kind + Gateway API v1.2.0 + ZenoIngress 0.1.4 + the basic-ingress app
-./verify.sh    # the app is served by 0.1.4's shared proxy (remembers its address)
+./up.sh        # kind + Gateway API v1.2.0 + ZenoIngress 0.1.5 + the basic-ingress app
+./verify.sh    # the app is served by 0.1.5's shared proxy (remembers its address)
 ./upgrade.sh   # the three upgrade steps below
 ./verify.sh    # same address, still shared, still served
 ./down.sh      # delete the kind cluster
@@ -21,12 +21,12 @@ upgraded, and prove nothing moved.
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
 
 # 2. ZenoIngress's own CRDs: Helm installs crds/ on the first install only
-helm show crds oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 \
+helm show crds oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 \
   | kubectl apply --server-side --force-conflicts -f -
 
 # 3. The release. --reset-then-reuse-values (Helm 3.14+) keeps the values you
 #    set and gives new settings their defaults; plain --reuse-values would not.
-helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 \
+helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 \
   -n zenoingress-system --reset-then-reuse-values
 ```
 
@@ -54,9 +54,9 @@ helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --versio
   collided with BackendTLSPolicy); step 2 updates it.
 - **Tunnel edges** (scenarios 07/08) now refuse `--auth-mode none` unless
   started with `--insecure-allow-no-auth`; configure token or mTLS auth first.
-- **For about 30 seconds after the upgrade** the old 0.1.4 controller is still
-  terminating (it has no leader election and waits out its grace period) while
-  the new one runs. Both write Gateway and GatewayClass status, so the new
-  controller's log shows a burst of reconciles. It stops when the old pod
-  exits; traffic is not affected. Upgrades from 0.1.5 on hand over through
-  leader election.
+- **For about 30 seconds after the upgrade** the old 0.1.5 controller is still
+  terminating (its leader election flag has no effect, and it waits out its
+  grace period) while the new one runs. Both write Gateway and GatewayClass
+  status, so the new controller's log shows a burst of reconciles. It stops
+  when the old pod exits; traffic is not affected. Upgrades from 0.2.0 on hand
+  over through leader election.

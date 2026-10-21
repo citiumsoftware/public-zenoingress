@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upgrade the 0.1.4 install from ./up.sh to the current release, the way an
+# Upgrade the 0.1.5 install from ./up.sh to the current release, the way an
 # existing user should:
 #
 #   1. Gateway API CRDs v1.2.0 -> v1.6.1 (server-side apply)

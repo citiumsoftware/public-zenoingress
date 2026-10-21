@@ -4,9 +4,9 @@ Thank you for testing zenoingress with us. This playbook is a menu: pick the
 parts that matter to you, run them, and tell us what happened, especially what
 surprised you or got in your way.
 
-> **Status (21 October 2026):** written for zenoingress **0.1.5** on Gateway API
+> **Status (21 October 2026):** written for zenoingress **0.2.0** on Gateway API
 > **v1.6.1**. Every script in Track A was run end to end on kind against the
-> 0.1.5 build and passes. Tracks B and C are checklists for your own clusters;
+> 0.2.0 build and passes. Tracks B and C are checklists for your own clusters;
 > their commands were checked against the same build.
 
 ## Contents
@@ -59,7 +59,7 @@ What each scenario proves:
 | 10 | [TLS to the backend](./scenarios/10-backend-tls/) | Verified TLS to an HTTPS backend; a wrong name or a missing CA fails closed. |
 | 11 | [CORS](./scenarios/11-cors/) | Only allowed origins get CORS access; preflights answered by the gateway. |
 | 12 | [A Gateway per team](./scenarios/12-gateway-per-team/) | Two Gateways, two addresses, the same hostname, isolated. |
-| 13 | [Upgrade from 0.1.4](./scenarios/13-upgrade-from-0.1.4/) | The address and the shared mode survive the upgrade. |
+| 13 | [Upgrade from 0.1.5](./scenarios/13-upgrade-from-0.1.5/) | The address and the shared mode survive the upgrade. |
 | 14 | [Resilience](./scenarios/14-resilience/) | No failed request while a proxy pod, the controller and the leader are replaced. |
 
 **Questions for Track A**
@@ -77,7 +77,7 @@ see, and what to tell us.
 
 ```bash
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
-helm install zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 \
+helm install zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 \
   -n zenoingress-system --create-namespace
 kubectl get gatewayclass zenoingress
 kubectl get gatewayclass zenoingress -o jsonpath='{.status.supportedFeatures[*].name}'
@@ -91,7 +91,7 @@ and the list of supported features.
 - Already have Gateway API CRDs from another controller? Tell us which
   version; zenoingress needs v1.6.1 (v1.4+ works without ListenerSet and
   BackendTLSPolicy).
-- Already running 0.1.4? Upgrade instead (B10).
+- Already running 0.1.5? Upgrade instead (B10).
 
 ### B2. Your first Gateway
 
@@ -252,13 +252,13 @@ command; it needs about 30 minutes and a load balancer.
 
 ### B10. Upgrade and rollback
 
-From 0.1.4 ([scenario 13](./scenarios/13-upgrade-from-0.1.4/) shows the whole
+From 0.1.5 ([scenario 13](./scenarios/13-upgrade-from-0.1.5/) shows the whole
 path):
 
 ```bash
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
-helm show crds oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 | kubectl apply --server-side --force-conflicts -f -
-helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 \
+helm show crds oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 | kubectl apply --server-side --force-conflicts -f -
+helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 \
   -n zenoingress-system --reset-then-reuse-values
 ```
 
@@ -269,8 +269,8 @@ drop the old field).
 **Expect:** the shared proxy keeps its address; Gateways stay `Programmed`.
 
 **Rollback** (`helm rollback zenoingress -n zenoingress-system`) returns to
-0.1.4 with the same address, and HTTP routes keep working (we tested this).
-The CRDs stay at v1.6.1, which 0.1.4 only partly understands: its TCP, TLS and
+0.1.5 with the same address, and HTTP routes keep working (we tested this).
+The CRDs stay at v1.6.1, which 0.1.5 only partly understands: its TCP, TLS and
 UDP routes stop working (it looks for them at `v1alpha2`), its controller logs
 `404 page not found` warnings, and client-certificate validation is not
 applied. Tell us how the upgrade and, if you try it, the rollback went.
@@ -318,9 +318,9 @@ We would rather you hear these from us:
   balancer's annotations (`proxy.service.annotations`).
 - **Conformance scope:** GRPCRoute, TLSRoute, TCPRoute and UDPRoute work and are
   covered by our tests, but their conformance profiles have not been run yet.
-- **Upgrading from 0.1.4:** for about 30 seconds the old and new controllers
-  both run (0.1.4 has no leader election); the logs show a burst of
-  reconciles. Traffic is not affected.
+- **Upgrading from 0.1.5:** for about 30 seconds the old and new controllers
+  both run (0.1.5 accepts `--leader-election` but does not act on it); the logs
+  show a burst of reconciles. Traffic is not affected.
 - **GitOps (`helm template`, Argo CD):** set `provisioning` explicitly; without
   cluster access the chart cannot see which mode an existing install uses.
 

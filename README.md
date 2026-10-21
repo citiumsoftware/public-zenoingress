@@ -75,11 +75,11 @@ The chart is an OCI artifact — no `helm repo add` needed:
 ```bash
 helm install zenoingress \
   oci://ghcr.io/citiumsoftware/zenoingress-chart \
-  --version 0.1.5 \
+  --version 0.2.0 \
   --namespace zenoingress-system \
   --create-namespace
 ```
-<!-- TODO(maintainer): requires the 0.1.5 chart and images pushed to ghcr before these docs go public. -->
+<!-- TODO(maintainer): requires the 0.2.0 chart and images pushed to ghcr before these docs go public. -->
 
 ### 3. Verify
 
@@ -111,23 +111,23 @@ receives only its own Gateway's configuration.
   ListenerSets ([scenario 09](./scenarios/09-multi-team-listenersets/)).
 - **Shared mode:** `--set provisioning=shared` (or the GatewayClass annotation
   `zenoingress.io/provisioning: shared`) serves all Gateways of a class from one proxy on one
-  address, as releases before 0.1.5 did. Tunnel mode always uses it.
+  address, as releases before 0.2.0 did. Tunnel mode always uses it.
 - **Conflicts:** two listeners that claim the same hostname on the same proxy and port, or use
   different protocols on it, can't both be served. The Gateway's own listeners and older ones win;
   the other reports `Conflicted=True` (`HostnameConflict` / `ProtocolConflict`) and serves nothing.
 
 ## Upgrading
 
-From 0.1.4 (full walkthrough: [scenario 13](./scenarios/13-upgrade-from-0.1.4/)):
+From 0.1.5 (full walkthrough: [scenario 13](./scenarios/13-upgrade-from-0.1.5/)):
 
 ```bash
 # 1. Gateway API CRDs
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
 # 2. zenoingress CRDs (Helm installs crds/ on the first install only)
-helm show crds oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 \
+helm show crds oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 \
   | kubectl apply --server-side --force-conflicts -f -
 # 3. the release
-helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.1.5 \
+helm upgrade zenoingress oci://ghcr.io/citiumsoftware/zenoingress-chart --version 0.2.0 \
   -n zenoingress-system --reset-then-reuse-values
 ```
 
@@ -148,13 +148,13 @@ authentication. Pulling an image does **not** grant a license to use zenoingress
 
 | Image                                            | Current tag |
 |--------------------------------------------------|-------------|
-| `ghcr.io/citiumsoftware/zenoingress-controller`  | `0.1.5`     |
-| `ghcr.io/citiumsoftware/zenoingress-proxy`       | `0.1.5`     |
-| `ghcr.io/citiumsoftware/zenoingress-edge`        | `0.1.5`     |
-| `oci://ghcr.io/citiumsoftware/zenoingress-chart` | `0.1.5`     |
+| `ghcr.io/citiumsoftware/zenoingress-controller`  | `0.2.0`     |
+| `ghcr.io/citiumsoftware/zenoingress-proxy`       | `0.2.0`     |
+| `ghcr.io/citiumsoftware/zenoingress-edge`        | `0.2.0`     |
+| `oci://ghcr.io/citiumsoftware/zenoingress-chart` | `0.2.0`     |
 
 ```bash
-docker pull ghcr.io/citiumsoftware/zenoingress-controller:0.1.5
+docker pull ghcr.io/citiumsoftware/zenoingress-controller:0.2.0
 ```
 
 ## Scenarios
@@ -178,7 +178,7 @@ chart, `./verify.sh` proves it with PASS/FAIL checks, and `./down.sh` cleans up.
 | 10 | [TLS to the backend](./scenarios/10-backend-tls/) | BackendTLSPolicy: re-encrypt and verify the backend; fails closed. |
 | 11 | [CORS](./scenarios/11-cors/) | The HTTPRoute CORS filter for a browser-facing API. |
 | 12 | [A Gateway per team](./scenarios/12-gateway-per-team/) | Each Gateway its own proxy and address; same hostname, isolated. |
-| 13 | [Upgrade from 0.1.4](./scenarios/13-upgrade-from-0.1.4/) | The upgrade path, proving the address and mode survive. |
+| 13 | [Upgrade from 0.1.5](./scenarios/13-upgrade-from-0.1.5/) | The upgrade path, proving the address and mode survive. |
 | 14 | [Resilience](./scenarios/14-resilience/) | Traffic keeps flowing while proxies and controllers are replaced (no failed requests). |
 
 To run the scenarios against a build you have locally (images in your docker daemon, chart on
@@ -191,7 +191,7 @@ and what we'd like to hear back.
 
 ## Gateway API conformance
 
-zenoingress 0.1.5 passes the Gateway API **v1.6.1** conformance suite, profile **GATEWAY-HTTP**:
+zenoingress 0.2.0 passes the Gateway API **v1.6.1** conformance suite, profile **GATEWAY-HTTP**:
 **Core 37/37, Extended 53/53**. Supported features (the GatewayClass also reports them in
 `status.supportedFeatures`): Gateway, HTTPRoute, ReferenceGrant, GatewayPort8080,
 GatewayAddressEmpty, GatewayHTTPListenerIsolation, GatewayHTTPSListenerDetectMisdirectedRequests,
