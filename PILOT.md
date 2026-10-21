@@ -234,8 +234,8 @@ fair comparison:
   ingresses: a CPU-limited proxy is throttled in bursts.
 - **`proxy.limits.upstreamKeepalive`** (default 512) above the number of
   requests in flight to one backend pod.
-- **Log level:** `--set proxy.logLevel=warn` gives a little more
-  throughput than the default `info`.
+- **Log level:** leave it at the default `info`; it costs no more than
+  `warn`. `debug` logs every request and slows the proxy down.
 
 Our own numbers against nginx, HAProxy, Envoy, ingress-nginx and Envoy
 Gateway are available on request.
