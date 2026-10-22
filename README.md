@@ -79,7 +79,6 @@ helm install zenoingress \
   --namespace zenoingress-system \
   --create-namespace
 ```
-<!-- TODO(maintainer): requires the 0.2.0 chart and images pushed to ghcr before these docs go public. -->
 
 ### 3. Verify
 
