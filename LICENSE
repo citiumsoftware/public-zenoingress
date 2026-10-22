@@ -42,14 +42,12 @@ zenoingress and its components — including the "zenoingress-controller",
 5. Restrictions. Except as expressly permitted by a written agreement with
    Citium, you may not: (a) use the Software beyond the free-use grant in
    Section 3 (for example, in more than one production Kubernetes cluster)
-   without a
-   commercial license; (b) copy, distribute, sublicense, rent, lease, or
-   otherwise make the
-   Software available to any third party; (c) offer the Software, in whole or in
-   part, as a hosted or managed service; (d) modify, translate, or create
-   derivative works of the Software; or (e) reverse engineer, decompile, or
-   disassemble the Software, except to the extent this restriction is prohibited
-   by applicable law.
+   without a commercial license; (b) copy, distribute, sublicense, rent, lease,
+   or otherwise make the Software available to any third party; (c) offer the
+   Software, in whole or in part, as a hosted or managed service; (d) modify,
+   translate, or create derivative works of the Software; or (e) reverse
+   engineer, decompile, or disassemble the Software, except to the extent this
+   restriction is prohibited by applicable law.
 
 6. Trademarks. "Citium", "zenoingress", and related names and logos are
    trademarks of Citium. This document grants no trademark rights.
