@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """Regenerate NOTICE + THIRD-PARTY-LICENSES.txt from the Rust dependency tree.
 
-Two steps (run per release):
+Per release, run tools/regen-notice.sh <source tree>: it scans what the images
+contain (controller, proxy with `--features full`, edge) with cargo-about
+(config: about.toml at the source root; accepted licenses mirror deny.toml),
+merges the result and calls this script:
 
-  1. In the SOURCE tree (~/dev/zenoingress), produce the license data:
-       cargo about generate --format json -o third-party.json
-     (config: about.toml at the source root; accepted licenses mirror deny.toml.)
-
-  2. Render the public artifacts:
-       python3 tools/gen-third-party-notice.py third-party.json .
+       python3 tools/gen-third-party-notice.py shipped.json .
 
 First-party Citium crates (zenoingress-*, zenolms*, LicenseRef-Proprietary) are
 excluded. Aborts if any bundled component is under a copyleft-only license.

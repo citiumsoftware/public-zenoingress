@@ -1,0 +1,169 @@
+# Multi-team ingress on ONE Gateway, ONE address (ListenerSet, Gateway API v1.5+).
+#
+#   platform team : owns Gateway "shop" (www.shop.test) and decides who may
+#                   attach listeners: namespaces labelled shop.test/gateway-access.
+#   team-a, team-b: each add their own hostname with a ListenerSet in their own
+#                   namespace, and route to their own app. No edits to the Gateway.
+#   team-b        : also tries to take a.shop.test -> refused (HostnameConflict),
+#                   team-a keeps it: the Gateway's and older listeners win.
+#   team-c        : namespace not labelled -> its ListenerSet is NotAllowed.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app
+  namespace: platform
+data:
+  Caddyfile: |
+    :80 {
+      respond "platform: www" 200
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: app }
+  template:
+    metadata:
+      labels: { app: app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: cfg, mountPath: /etc/caddy }]
+      volumes:
+        - name: cfg
+          configMap: { name: app }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: platform
+spec:
+  selector: { app: app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shop
+  namespace: platform
+spec:
+  gatewayClassName: zenoingress
+  allowedListeners:
+    namespaces:
+      from: Selector
+      selector:
+        matchLabels:
+          shop.test/gateway-access: "true"
+  listeners:
+    - name: www
+      port: 80
+      protocol: HTTP
+      hostname: www.shop.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app
+  namespace: platform
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: shop
+  rules:
+    - backendRefs:
+        - name: app
+          port: 80
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+  labels:
+    shop.test/gateway-access: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app
+  namespace: team-a
+data:
+  Caddyfile: |
+    :80 {
+      respond "team-a: shop A" 200
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: team-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: app }
+  template:
+    metadata:
+      labels: { app: app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: cfg, mountPath: /etc/caddy }]
+      volumes:
+        - name: cfg
+          configMap: { name: app }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: team-a
+spec:
+  selector: { app: app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: team-a
+  namespace: team-a
+spec:
+  parentRef:
+    name: shop
+    namespace: platform
+  listeners:
+    - name: a
+      port: 80
+      protocol: HTTP
+      hostname: a.shop.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app
+  namespace: team-a
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: ListenerSet
+      name: team-a
+  rules:
+    - backendRefs:
+        - name: app
+          port: 80

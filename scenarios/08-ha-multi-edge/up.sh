@@ -13,18 +13,18 @@
 #
 # Requires: docker, kind, kubectl, helm 3.8+, openssl.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
+source ../lib/common.sh
 CLUSTER=zeno-ha
 NET=kind
-EDGE_IMAGE="ghcr.io/citiumsoftware/zenoingress-edge:${ZENOINGRESS_VERSION:-0.1.4}"
-CHART="oci://ghcr.io/citiumsoftware/zenoingress-chart"
-CHART_VERSION="${ZENOINGRESS_CHART_VERSION:-0.1.4}"
+EDGE_IMAGE="$(zi_image edge)"
 
 echo "==> 1/7 sovereign kind cluster '${CLUSTER}' (also creates the '${NET}' docker network)"
-kind get clusters 2>/dev/null | grep -qx "$CLUSTER" || kind create cluster --name "$CLUSTER" --wait 60s
+zi_cluster "$CLUSTER"
+zi_load_images "$CLUSTER" controller proxy
 
-echo "==> 2/7 Gateway API v1.2.0 CRDs"
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+echo "==> 2/7 Gateway API ${GATEWAY_API_VERSION} CRDs"
+zi_gateway_api
 
 echo "==> 3/7 mint a self-signed edge TLS cert"
 ./gen-certs.sh
@@ -37,15 +37,16 @@ for spec in "edge-a 8443" "edge-b 9443"; do
     -p "$2:8443" -v "$(pwd)/certs:/certs:ro" \
     "$EDGE_IMAGE" \
     --data-addr=0.0.0.0:8443 --control-addr=0.0.0.0:7844 \
-    --cert=/certs/edge.crt --key=/certs/edge.key --auth-mode=none --json-logs >/dev/null
+    --config=/certs/edge-auth.yaml \
+    --cert=/certs/edge.crt --key=/certs/edge.key --auth-mode=token --json-logs >/dev/null
 done
 EA="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").IPAddress}}" edge-a)"
 EB="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$NET\").IPAddress}}" edge-b)"
 echo "    edge-a=${EA}:7844 (localhost:8443)   edge-b=${EB}:7844 (localhost:9443)"
 
 echo "==> 5/7 install ZenoIngress in TUNNEL mode with BOTH edges (one proxy Deployment per edge)"
-helm upgrade --install zenoingress "$CHART" --version "$CHART_VERSION" \
-  -n zenoingress-system --create-namespace -f values-tunnel.yaml \
+zi_install -f values-tunnel.yaml \
+  --set "proxy.tunnel.auth.token=$(cat certs/tunnel-token)" \
   --set "proxy.tunnel.edges[0].address=${EA}:7844" \
   --set "proxy.tunnel.edges[1].address=${EB}:7844"
 

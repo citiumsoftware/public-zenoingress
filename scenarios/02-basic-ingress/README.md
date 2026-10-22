@@ -34,6 +34,9 @@ chart for you.
   `/usr/share/caddy`, a Service, a `Gateway` on the `zenoingress` class, and an
   `HTTPRoute` for `welcome.zenoingress.test`. No custom image — the official
   `caddy:2-alpine` serves whatever is mounted at its web root.
-- **`up.sh`** — installs the chart with `proxy.service.type=ClusterIP` and a
-  single replica each (kind has no LoadBalancer). `verify.sh` reaches the proxy
-  with `kubectl port-forward`.
+- **`up.sh`** — installs the chart with `proxy.service.type=ClusterIP` and one
+  proxy replica (kind has no load balancer). The controller then starts a proxy
+  for the Gateway: a Deployment and a Service named `simple-gateway-zenoingress`
+  in `simple-ingress`, owned by the Gateway. `verify.sh` reaches that Service
+  with `kubectl port-forward`, and also checks that a host without a route gets
+  404.

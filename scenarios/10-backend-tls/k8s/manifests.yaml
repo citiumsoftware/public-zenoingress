@@ -1,0 +1,228 @@
+# Re-encryption to an HTTPS backend with the Gateway API BackendTLSPolicy.
+#
+#   curl --HTTP--> ZenoIngress proxy --TLS (verified)--> Caddy on :8443
+#
+# The backend serves a certificate from a private CA. A BackendTLSPolicy tells
+# the proxy to use TLS for that Service, which CA to trust and which name to
+# expect. Three more Services point at the same pods to show what fails, and
+# fails closed (5xx, never plain text, never an unverified connection):
+#   wrong-name : the policy expects a name the certificate does not carry
+#   no-ca      : the policy's CA ConfigMap does not exist
+#   by-spiffe  : the policy checks a SPIFFE URI SAN instead (succeeds)
+# The CA ConfigMap and the backend's certificate Secret are created by up.sh.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-caddyfile
+  namespace: backend-tls
+data:
+  Caddyfile: |
+    {
+      auto_https off
+    }
+    :8443 {
+      tls /certs/tls.crt /certs/tls.key
+      respond "secure backend: TLS verified" 200
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: backend-tls
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: backend }
+  template:
+    metadata:
+      labels: { app: backend }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 8443 }]
+          volumeMounts:
+            - { name: cfg, mountPath: /etc/caddy }
+            - { name: certs, mountPath: /certs, readOnly: true }
+      volumes:
+        - name: cfg
+          configMap: { name: backend-caddyfile }
+        - name: certs
+          secret: { secretName: backend-cert }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gw
+  namespace: backend-tls
+spec:
+  gatewayClassName: zenoingress
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: backend-tls
+spec:
+  selector: { app: backend }
+  ports: [{ name: https, port: 443, targetPort: 8443 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: backend
+  namespace: backend-tls
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: backend
+  validation:
+    caCertificateRefs:
+      - group: ""
+        kind: ConfigMap
+        name: backend-ca
+    hostname: backend.secure.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: backend
+  namespace: backend-tls
+spec:
+  parentRefs:
+    - name: gw
+  hostnames: [secure.test]
+  rules:
+    - backendRefs:
+        - name: backend
+          port: 443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wrong-name
+  namespace: backend-tls
+spec:
+  selector: { app: backend }
+  ports: [{ name: https, port: 443, targetPort: 8443 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: wrong-name
+  namespace: backend-tls
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: wrong-name
+  validation:
+    caCertificateRefs:
+      - group: ""
+        kind: ConfigMap
+        name: backend-ca
+    hostname: someone-else.secure.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: wrong-name
+  namespace: backend-tls
+spec:
+  parentRefs:
+    - name: gw
+  hostnames: [wrong-name.secure.test]
+  rules:
+    - backendRefs:
+        - name: wrong-name
+          port: 443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: no-ca
+  namespace: backend-tls
+spec:
+  selector: { app: backend }
+  ports: [{ name: https, port: 443, targetPort: 8443 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: no-ca
+  namespace: backend-tls
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: no-ca
+  validation:
+    caCertificateRefs:
+      - group: ""
+        kind: ConfigMap
+        name: missing-ca
+    hostname: backend.secure.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: no-ca
+  namespace: backend-tls
+spec:
+  parentRefs:
+    - name: gw
+  hostnames: [no-ca.secure.test]
+  rules:
+    - backendRefs:
+        - name: no-ca
+          port: 443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: by-spiffe
+  namespace: backend-tls
+spec:
+  selector: { app: backend }
+  ports: [{ name: https, port: 443, targetPort: 8443 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: by-spiffe
+  namespace: backend-tls
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: by-spiffe
+  validation:
+    caCertificateRefs:
+      - group: ""
+        kind: ConfigMap
+        name: backend-ca
+    hostname: backend.internal
+    subjectAltNames:
+      - type: URI
+        uri: spiffe://secure.test/backend
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: by-spiffe
+  namespace: backend-tls
+spec:
+  parentRefs:
+    - name: gw
+  hostnames: [spiffe.secure.test]
+  rules:
+    - backendRefs:
+        - name: by-spiffe
+          port: 443

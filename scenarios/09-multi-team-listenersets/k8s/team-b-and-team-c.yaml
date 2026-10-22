@@ -1,0 +1,161 @@
+# team-b and team-c, applied after team-a so team-a is the older ListenerSet.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-b
+  labels:
+    shop.test/gateway-access: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app
+  namespace: team-b
+data:
+  Caddyfile: |
+    :80 {
+      respond "team-b: shop B" 200
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: team-b
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: app }
+  template:
+    metadata:
+      labels: { app: app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: cfg, mountPath: /etc/caddy }]
+      volumes:
+        - name: cfg
+          configMap: { name: app }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: team-b
+spec:
+  selector: { app: app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: team-b
+  namespace: team-b
+spec:
+  parentRef:
+    name: shop
+    namespace: platform
+  listeners:
+    - name: b
+      port: 80
+      protocol: HTTP
+      hostname: b.shop.test
+    - name: steal
+      port: 80
+      protocol: HTTP
+      hostname: a.shop.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app
+  namespace: team-b
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: ListenerSet
+      name: team-b
+  rules:
+    - backendRefs:
+        - name: app
+          port: 80
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-c
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app
+  namespace: team-c
+data:
+  Caddyfile: |
+    :80 {
+      respond "team-c: shop C" 200
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: team-c
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: app }
+  template:
+    metadata:
+      labels: { app: app }
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports: [{ containerPort: 80 }]
+          volumeMounts: [{ name: cfg, mountPath: /etc/caddy }]
+      volumes:
+        - name: cfg
+          configMap: { name: app }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: team-c
+spec:
+  selector: { app: app }
+  ports: [{ name: http, port: 80, targetPort: 80 }]
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: team-c
+  namespace: team-c
+spec:
+  parentRef:
+    name: shop
+    namespace: platform
+  listeners:
+    - name: c
+      port: 80
+      protocol: HTTP
+      hostname: c.shop.test
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app
+  namespace: team-c
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: ListenerSet
+      name: team-c
+  rules:
+    - backendRefs:
+        - name: app
+          port: 80

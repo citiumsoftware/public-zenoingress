@@ -1,0 +1,122 @@
+# The entire "simple ingress" demo, in one namespace and one apply:
+#
+#   Caddy (static page)  ->  Service  ->  HTTPRoute  ->  Gateway (class: zenoingress)
+#
+# ZenoIngress's controller sees the Gateway + HTTPRoute, programs the shared
+# proxy, and the proxy serves welcome.zenoingress.test from the Caddy pod.
+# No custom image: the official caddy image serves whatever is at
+# /usr/share/caddy, so we just mount our index.html there via a ConfigMap.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simple-ingress
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: welcome-html
+  namespace: simple-ingress
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Welcome To ZenoIngress</title>
+        <style>
+          body {
+            margin: 0; height: 100vh; display: grid; place-items: center;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0b1f3a; color: #e8eef7;
+          }
+          h1 { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 650; }
+          .teal { color: #2dd4bf; }
+          p { color: #9fb2cc; margin-top: .5rem; }
+        </style>
+      </head>
+      <body>
+        <main style="text-align:center">
+          <h1>Welcome To <span class="teal">ZenoIngress</span></h1>
+          <p>Served by Caddy, exposed through the Gateway API.</p>
+        </main>
+      </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: welcome
+  namespace: simple-ingress
+  labels:
+    app: welcome
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: welcome
+  template:
+    metadata:
+      labels:
+        app: welcome
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/caddy
+      volumes:
+        - name: html
+          configMap:
+            name: welcome-html
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: welcome
+  namespace: simple-ingress
+spec:
+  selector:
+    app: welcome
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: simple-gateway
+  namespace: simple-ingress
+spec:
+  gatewayClassName: zenoingress
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: welcome
+  namespace: simple-ingress
+spec:
+  parentRefs:
+    - name: simple-gateway
+  hostnames:
+    - welcome.zenoingress.test
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: welcome
+          port: 80

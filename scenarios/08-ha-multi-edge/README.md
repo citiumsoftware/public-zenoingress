@@ -57,9 +57,11 @@ allowed — that's the DR pattern.
 - **Real edges:** run each `zenoingress-edge` on a public node in a different
   region; steer clients to the nearest healthy edge with **DNS / Anycast** and fail
   over by withdrawing a region.
-- **Harden the trust:** this demo uses `--auth-mode=none` + a self-signed cert with
-  `verify: false`. For production, switch each edge to `--auth-mode mtls` with your
-  own CA and pin it on the proxy (`tls.verify: true`).
+- **Harden the trust:** both edges require the same random tunnel token (see
+  scenario 07), but the proxy does not verify their self-signed certificate
+  (`verify: false`). For production, use certificates the proxy verifies
+  (`tls.verify: true`, `tls.caSecret`), keep the token in a Secret, or use
+  `--auth-mode mtls`.
 
 ## Notes / caveats
 

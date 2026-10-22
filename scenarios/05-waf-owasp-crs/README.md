@@ -30,8 +30,8 @@ zenoingress from the public chart.
 ./down.sh      # delete the kind cluster
 ```
 
-Then browse it: port-forward the proxy to any free local port and open it. Type
-input or click a sample and watch allowed vs. blocked.
+Then browse it: `kubectl -n waf-crs port-forward svc/waf-gateway-zenoingress 18080:80`
+and open <http://localhost:18080>. input or click a sample and watch allowed vs. blocked.
 
 ## Simple vs. advanced
 
